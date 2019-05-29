@@ -13,13 +13,26 @@ class GoogleDriveController:
         """dir以下のファイル一覧を取得する."""
         pass
 
-    def delete_files(self, file_list, dir):
-        """dir以下の指定したfileのidリストに該当するファイルを一括削除する."""
-        pass
+    def delete_files(self, file_list):
+        """指定したfileのidリストに該当するファイルを一括削除する."""
+        for i in file_list:
+            x = self.drive.CreateFile({'id': i})
+            x.Delete()
 
     def download_files(self, id_list):
         """idリストに該当するfileをダウンロードする."""
         pass
 
-    def upload_files(self, filepath_list):
+    def upload_files(self, filepath_list, folder_id):
         """ローカルにあるファイルをアップロードする."""
+        for p in filepath_list:
+            file = self.drive.CreateFile(
+                {'title': p.name, 'mimeType': f"image/{p.suffix[1:]}", 'parents': [{'kind': 'drive#fileLink', 'id': folder_id}]})
+            file.SetContentFile(p)
+            file.Upload()
+
+
+if __name__ == "__main__":
+    from pathlib import Path
+    controller = GoogleDriveController()
+    controller.upload_files([Path("./kakapo.jpg")], "root")

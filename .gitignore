@@ -107,3 +107,4 @@ venv.bak/
 settings.yaml
 credentials.json
 model.h5
+*.jpg
