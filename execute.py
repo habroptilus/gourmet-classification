@@ -4,12 +4,14 @@ from keras.preprocessing.image import load_img, img_to_array
 import numpy as np
 from keras.models import load_model
 import shutil
+from config import checked_image_dir, gourmet_dir
+import argparse
+from args import get_args
 
 
-def filtered_path_list(days=7):
+def filtered_path_list(days, checked_image_dir):
     today = datetime.today()
-    p = Path(
-        f"/Users/hikaru/picture/google_drive_smart/Google フォト/{today.year}")
+    p = Path(f"{checked_image_dir}/{today.year}")
     all_path_list = list(p.glob("*"))
     print(f"{len(all_path_list)} files are found.")
     result = []
@@ -23,7 +25,7 @@ def filtered_path_list(days=7):
     return result
 
 
-def load_images(path_list, height=224, width=224):
+def load_images(path_list, height, width):
     images = []
     for path in path_list:
         img = load_img(path, target_size=(height, width))
@@ -32,25 +34,31 @@ def load_images(path_list, height=224, width=224):
     return np.array(images)
 
 
-def get_prediction(images, threshold=0.5, model_path="./models/model_v1.h5"):
+def get_prediction(images, threshold, model_dir, model_name):
+    model_path = f"{model_dir}/{model_name}"
     model = load_model(model_path)
     pred = model.predict(images)[:, 1]
     return np.where(pred >= threshold, 1, 0)
 
 
-def move_files(pred, path_list, gourmet_dir="/Users/hikaru/picture/google_drive_smart/gourmet"):
+def move_files(pred, path_list, gourmet_dir):
     for i in range(len(path_list)):
         if pred[i] == 1:
             shutil.move(str(path_list[i]),
                         f"{gourmet_dir}/{path_list[i].name}")
+    print(f"{sum(pred==1)} files are classified as gourmet image and moved.")
 
 
-days = 5
-path_list = filtered_path_list(days)
-images = load_images(path_list)
-print(images.shape)
+if __name__ == "__main__":
 
-pred = get_prediction(images)
-print(pred)
+    parser = argparse.ArgumentParser()
+    get_args(parser)
+    args = parser.parse_args()
 
-move_files(pred, path_list, gourmet_dir="./images")
+    path_list = filtered_path_list(
+        days=args.days, checked_image_dir=checked_image_dir)
+    images = load_images(path_list, height=args.height, width=args.width)
+    pred = get_prediction(images, threshold=args.threshold,
+                          model_dir=args.model_dir, model_name=args.model_name)
+
+    move_files(pred, path_list, gourmet_dir=gourmet_dir)

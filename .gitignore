@@ -108,3 +108,4 @@ settings.yaml
 credentials.json
 models/*
 images/*
+config.py
