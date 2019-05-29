@@ -106,3 +106,4 @@ venv.bak/
 # edit
 settings.yaml
 credentials.json
+model.h5
