@@ -58,6 +58,8 @@ if __name__ == "__main__":
     path_list = filtered_path_list(
         days=args.days, checked_image_dir=checked_image_dir)
     images = load_images(path_list, height=args.height, width=args.width)
+    if len(images) == 0:
+        raise Exception("No images to be classified!")
     pred = get_prediction(images, threshold=args.threshold,
                           model_dir=args.model_dir, model_name=args.model_name)
 
