@@ -106,5 +106,5 @@ venv.bak/
 # edit
 settings.yaml
 credentials.json
-model.h5
-*.jpg
+models/*
+images/*
