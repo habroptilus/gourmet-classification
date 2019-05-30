@@ -11,6 +11,8 @@ from args import get_args
 
 def filtered_path_list(days, checked_image_dir):
     today = datetime.today()
+    today_str = today.strftime("%Y/%m/%d %H:%M:%S")
+    print(f"Executed at {today_str}.")
     p = Path(f"{checked_image_dir}/{today.year}")
     all_path_list = list(p.glob("*"))
     print(f"{len(all_path_list)} files are found.")
