@@ -7,7 +7,7 @@ def get_args(parser):
                         help='directory of trained models.')
     parser.add_argument('--model-name', dest='model_name', default='model_v1.h5', type=str,
                         help='the name of trained model.')
-    parser.add_argument('--days', dest='days', default=7, type=int,
+    parser.add_argument('--days', dest='days', default=3, type=int,
                         help='the range of images to be predicted.')
     parser.add_argument('--height', dest='height', default=224, type=int,
                         help='the height of image.')
