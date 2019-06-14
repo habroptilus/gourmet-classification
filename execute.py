@@ -10,21 +10,20 @@ from args import get_args
 
 
 def filtered_path_list(days, checked_image_dir):
+    """実行した日の前日からdays日間に撮影されたimage fileのpathを取得する."""
     today = datetime.today()
-    today_str = today.strftime("%Y/%m/%d %H:%M:%S")
-    print(f"Executed at {today_str}.")
-    p = Path(f"{checked_image_dir}/{today.year}")
-    all_path_list = list(p.glob("*"))
-    print(f"{len(all_path_list)} files are found.")
     result = []
-    for path in p.glob("*"):
-        ct = path.stat().st_birthtime
-        dt = datetime.fromtimestamp(ct)
-        from_dt = today - timedelta(days=days)
-        if from_dt <= dt:
-            result.append(path)
-    print(f"{len(result)} files have remained after filtering.")
+    for i in range(1, days + 1):
+        d = today - timedelta(days=i)
+        result = result + \
+            get_path_list(d.year, d.month, d.day, checked_image_dir)
     return result
+
+
+def get_path_list(year, month, day, checked_img_dir):
+    """指定した日付の画像のpathのリストを返す."""
+    p = checked_img_dir / f"{year}/{month:02d}/{day:02d}"
+    return list(p.glob("*/*"))
 
 
 def load_images(path_list, height, width):
@@ -58,7 +57,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     path_list = filtered_path_list(
-        days=args.days, checked_image_dir=checked_image_dir)
+        days=args.days, checked_image_dir=Path(checked_image_dir))
+    print(f"{len(path_list)} files are found.")
     images = load_images(path_list, height=args.height, width=args.width)
     if len(images) == 0:
         raise Exception("No images to be classified!")
