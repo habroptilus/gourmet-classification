@@ -15,8 +15,10 @@ def filtered_path_list(days, checked_image_dir):
     result = []
     for i in range(1, days + 1):
         d = today - timedelta(days=i)
-        result = result + \
-            get_path_list(d.year, d.month, d.day, checked_image_dir)
+        date_limited_path_list = get_path_list(
+            d.year, d.month, d.day, checked_image_dir)
+        filtered_with_suffix = filter_with_suffix(date_limited_path_list)
+        result = result + filtered_with_suffix
     return result
 
 
@@ -24,6 +26,15 @@ def get_path_list(year, month, day, checked_img_dir):
     """指定した日付の画像のpathのリストを返す."""
     p = checked_img_dir / f"{year}/{month:02d}/{day:02d}"
     return list(p.glob("*/*"))
+
+
+def filter_with_suffix(path_list):
+    """該当する拡張子以外のファイルへのpathをリストから除外する."""
+    result = []
+    for path in path_list:
+        if path.suffix.lower() in [".jpg", ".png"]:
+            result.append(path)
+    return result
 
 
 def load_images(path_list, height, width):
@@ -58,6 +69,8 @@ if __name__ == "__main__":
 
     path_list = filtered_path_list(
         days=args.days, checked_image_dir=Path(checked_image_dir))
+    date = datetime.now()
+    print(f"[{date.year}/{date.month:02d}/{date.day:02d} {date.hour:02d}:{date.minute:02d}]")
     print(f"{len(path_list)} files are found.")
     images = load_images(path_list, height=args.height, width=args.width)
     if len(images) == 0:
