@@ -54,21 +54,20 @@ def get_prediction(images, threshold, model_dir, model_name):
     return np.where(pred >= threshold, 1, 0)
 
 
-def move_files(path_list):
+def move_files(path_list, gourmet_dir):
     for p in path_list:
-        shutil.move(p)
+        shutil.move(p, gourmet_dir / p.name)
 
 
-def get_gourmet_path_list(pred, path_list_to_classify, gourmet_dir):
+def get_gourmet_path_list(pred, path_list_to_classify):
     path_list = []
     for i in range(len(path_list_to_classify)):
         if pred[i] == 1:
-            path_list.append(str(path_list[i]),
-                             f"{gourmet_dir}/{path_list[i].name}")
+            path_list.append(path_list_to_classify[i])
     return path_list
 
 
-def post_to_slack(message, path_list, slack_token):
+def post_to_slack(message, path_list, slack_token, gourmet_dir):
     client = WebClient(slack_token)
     client.chat_postMessage(channel="classified_gourmet",
                             text=message, username="gourmet_classifier")
@@ -76,7 +75,7 @@ def post_to_slack(message, path_list, slack_token):
     for p in path_list:
         client.files_upload(
             channels="classified_gourmet",
-            file=p
+            file=str(gourmet_dir / p.name)
         )
 
 
@@ -100,9 +99,9 @@ def main(args):
 
     message_to_post += f"{sum(pred==1)} files are classified as gourmet image and moved."
     path_list = get_gourmet_path_list(
-        pred, path_list_to_classify, gourmet_dir=gourmet_dir)
-    move_files(path_list)
-    post_to_slack(message_to_post, path_list, slack_token)
+        pred, path_list_to_classify)
+    move_files(path_list, gourmet_dir)
+    post_to_slack(message_to_post, path_list, slack_token, gourmet_dir)
 
 
 if __name__ == "__main__":
