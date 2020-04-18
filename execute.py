@@ -4,9 +4,10 @@ from keras.preprocessing.image import load_img, img_to_array
 import numpy as np
 from keras.models import load_model
 import shutil
-from config import checked_image_dir, gourmet_dir
+from config import checked_image_dir, gourmet_dir, slack_token
 import argparse
 from args import get_args
+from slack import WebClient
 
 
 def filtered_path_list(days, checked_image_dir):
@@ -53,29 +54,59 @@ def get_prediction(images, threshold, model_dir, model_name):
     return np.where(pred >= threshold, 1, 0)
 
 
-def move_files(pred, path_list, gourmet_dir):
-    for i in range(len(path_list)):
+def move_files(path_list):
+    for p in path_list:
+        shutil.move(p)
+
+
+def get_gourmet_path_list(pred, path_list_to_classify, gourmet_dir):
+    path_list = []
+    for i in range(len(path_list_to_classify)):
         if pred[i] == 1:
-            shutil.move(str(path_list[i]),
-                        f"{gourmet_dir}/{path_list[i].name}")
-    print(f"{sum(pred==1)} files are classified as gourmet image and moved.")
+            path_list.append(str(path_list[i]),
+                             f"{gourmet_dir}/{path_list[i].name}")
+    return path_list
 
 
-if __name__ == "__main__":
+def post_to_slack(message, path_list, slack_token):
+    client = WebClient(slack_token)
+    client.chat_postMessage(channel="classified_gourmet",
+                            text=message, username="gourmet_classifier")
 
-    parser = argparse.ArgumentParser()
-    get_args(parser)
-    args = parser.parse_args()
+    for p in path_list:
+        client.files_upload(
+            channels="classified_gourmet",
+            file=p
+        )
 
-    path_list = filtered_path_list(
+
+def main(args):
+    message_to_post = ""
+    path_list_to_classify = filtered_path_list(
         days=args.days, checked_image_dir=Path(checked_image_dir))
     date = datetime.now()
-    print(f"[{date.year}/{date.month:02d}/{date.day:02d} {date.hour:02d}:{date.minute:02d}]")
-    print(f"{len(path_list)} files are found.")
-    images = load_images(path_list, height=args.height, width=args.width)
+    message_to_post += f"[{date.year}/{date.month:02d}/{date.day:02d} {date.hour:02d}:{date.minute:02d}]\n"
+
+    images = load_images(path_list_to_classify,
+                         height=args.height, width=args.width)
     if len(images) == 0:
-        raise Exception("No images to be classified!")
+        message_to_post += "No images to be classified!"
+        post_to_slack(message_to_post, [], slack_token)
+        return
+    else:
+        message_to_post += f"{len(path_list_to_classify)} files are found.\n"
     pred = get_prediction(images, threshold=args.threshold,
                           model_dir=args.model_dir, model_name=args.model_name)
 
-    move_files(pred, path_list, gourmet_dir=gourmet_dir)
+    message_to_post += f"{sum(pred==1)} files are classified as gourmet image and moved."
+    path_list = get_gourmet_path_list(
+        pred, path_list_to_classify, gourmet_dir=gourmet_dir)
+    move_files(path_list)
+    post_to_slack(message_to_post, path_list, slack_token)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    get_args(parser)
+    args = parser.parse_args()
+    main(args)
