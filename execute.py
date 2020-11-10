@@ -7,6 +7,7 @@ import shutil
 from config import checked_image_dir, gourmet_dir, slack_token
 import argparse
 from args import get_args
+import glob
 from slack import WebClient
 
 
@@ -97,10 +98,12 @@ def main(args):
     pred = get_prediction(images, threshold=args.threshold,
                           model_dir=args.model_dir, model_name=args.model_name)
 
-    message_to_post += f"{sum(pred==1)} files are classified as gourmet image and moved."
+    message_to_post += f"{sum(pred==1)} files are classified as gourmet image and moved.\n"
     path_list = get_gourmet_path_list(
         pred, path_list_to_classify)
     move_files(path_list, gourmet_dir)
+    images_num = len(glob.glob(f"{gourmet_dir}/*"))
+    message_to_post += f"{images_num} files are in {gourmet_dir} now."
     post_to_slack(message_to_post, path_list, slack_token, gourmet_dir)
 
 
