@@ -90,8 +90,10 @@ def main(args):
     images = load_images(path_list_to_classify,
                          height=args.height, width=args.width)
     if len(images) == 0:
-        message_to_post += "No images to be classified!"
-        post_to_slack(message_to_post, [], slack_token)
+        message_to_post += "No images to be classified!\n"
+        images_num = len(glob.glob(f"{gourmet_dir}/*"))
+        message_to_post += f"{images_num} files are in {gourmet_dir} now."
+        post_to_slack(message_to_post, [], slack_token, gourmet_dir)
         return
     else:
         message_to_post += f"{len(path_list_to_classify)} files are found.\n"
